@@ -1,0 +1,493 @@
+<title>IAD⇄PUJ Fare Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<script type="application/json" id="watch-data">
+{
+  "itinerary": {
+    "out":  { "flight": "UA 1661", "from": "IAD", "to": "PUJ", "date": "2026-12-16", "dep": "8:20 AM",  "arr": "1:08 PM", "dur": "3h 48m" },
+    "back": { "flight": "UA 1614", "from": "PUJ", "to": "IAD", "date": "2026-12-20", "dep": "12:56 PM", "arr": "3:55 PM", "dur": "3h 59m" },
+    "pax": 2,
+    "cabin": "Standard Economy"
+  },
+  "config": {
+    "tier1": 1600,
+    "baseline": 1770,
+    "watchFloor": 1750,
+    "typicalLow": 1050,
+    "typicalHigh": 2550,
+    "bookingUrl": "https://www.google.com/travel/flights/booking?tfs=CBwQAhpGEgoyMDI2LTEyLTE2IiAKA0lBRBIKMjAyNi0xMi0xNhoDUFVKKgJVQTIEMTY2MSgAMgJVQWoHCAESA0lBRHIHCAESA1BVShpGEgoyMDI2LTEyLTIwIiAKA1BVShIKMjAyNi0xMi0yMBoDSUFEKgJVQTIEMTYxNCgAMgJVQWoHCAESA1BVSnIHCAESA0lBREABQAFIAWoEEAEYAHABggELCP___________wGYAQE"
+  },
+  "lastRun": { "ts": "2026-08-25T20:22:54-04:00", "status": "ok", "source": "google-flights", "note": "seeded from local tracker" },
+  "log": [
+    { "ts": "2026-08-24T09:40:00-04:00", "economy": 1770, "basic": 1520, "insight": "typical", "tier": null, "note": "baseline for standard Economy / 2 pax" },
+    { "ts": "2026-08-25T20:22:54-04:00", "economy": 2042, "basic": 1792, "insight": "typical", "tier": null, "note": "" }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --ground:    #f4f6f5;
+    --surface:   #ffffff;
+    --surface-2: #e9edec;
+    --line:      #d3dad8;
+    --line-soft: #e3e8e7;
+    --ink:       #0f1e24;
+    --ink-2:     #47585d;
+    --ink-3:     #7b8b8f;
+    --accent:    #0f6f6c;
+    --accent-dim:#0f6f6c1f;
+    --good:      #1c7a52;
+    --good-dim:  #1c7a5218;
+    --warn:      #9d6b12;
+    --rise:      #a2434a;
+    --shadow:    0 1px 2px #0f1e2410, 0 8px 24px #0f1e240a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #0a1317;
+      --surface:   #101d22;
+      --surface-2: #16262c;
+      --line:      #23383f;
+      --line-soft: #1a2c32;
+      --ink:       #e4eeeb;
+      --ink-2:     #a2b5b7;
+      --ink-3:     #6d8386;
+      --accent:    #4ec9bd;
+      --accent-dim:#4ec9bd22;
+      --good:      #4fbf8b;
+      --good-dim:  #4fbf8b1f;
+      --warn:      #d3a04a;
+      --rise:      #e08b91;
+      --shadow:    0 1px 2px #00000040, 0 8px 24px #00000030;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:    #0a1317;
+    --surface:   #101d22;
+    --surface-2: #16262c;
+    --line:      #23383f;
+    --line-soft: #1a2c32;
+    --ink:       #e4eeeb;
+    --ink-2:     #a2b5b7;
+    --ink-3:     #6d8386;
+    --accent:    #4ec9bd;
+    --accent-dim:#4ec9bd22;
+    --good:      #4fbf8b;
+    --good-dim:  #4fbf8b1f;
+    --warn:      #d3a04a;
+    --rise:      #e08b91;
+    --shadow:    0 1px 2px #00000040, 0 8px 24px #00000030;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 22px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead { display: flex; flex-direction: column; gap: 6px; }
+  .masthead h1 {
+    margin: 0;
+    font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .masthead p { margin: 0; color: var(--ink-2); max-width: 62ch; }
+
+  /* ---------- price panel ---------- */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+
+  .price-panel { padding: 26px 26px 22px; display: flex; flex-direction: column; gap: 20px; }
+
+  .price-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 26px;
+  }
+  .figure { display: flex; flex-direction: column; gap: 4px; }
+  .figure .amount {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(40px, 8vw, 58px);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .figure .sub { color: var(--ink-2); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+
+  .delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+  }
+  .delta.up   { color: var(--rise); background: color-mix(in srgb, var(--rise) 12%, transparent); }
+  .delta.down { color: var(--good); background: var(--good-dim); }
+  .delta.flat { color: var(--ink-3); background: var(--surface-2); }
+
+  .state {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .state.buy { border-color: var(--good); background: var(--good-dim); color: var(--good); }
+  .state .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+
+  /* ---------- stats ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    background: var(--line-soft);
+    border-top: 1px solid var(--line-soft);
+  }
+  .stat { background: var(--surface); padding: 14px 26px 16px; display: flex; flex-direction: column; gap: 3px; }
+  .stat .v {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .stat .v.good { color: var(--good); }
+
+  /* ---------- chart ---------- */
+  .chart-card { padding: 20px 26px 14px; display: flex; flex-direction: column; gap: 14px; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .chart-scroll { overflow-x: auto; }
+  svg.chart { display: block; width: 100%; min-width: 320px; height: 170px; }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 14px; height: 2px; border-radius: 2px; background: var(--accent); }
+  .swatch.buy { background: var(--good); height: 0; border-top: 2px dashed var(--good); }
+
+  /* ---------- itinerary ---------- */
+  .itin { padding: 0; overflow: hidden; }
+  .leg {
+    display: grid;
+    grid-template-columns: 78px 1fr auto;
+    gap: 4px 18px;
+    align-items: center;
+    padding: 16px 26px;
+  }
+  .leg + .leg { border-top: 1px solid var(--line-soft); }
+  .leg .code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .leg .route {
+    font-family: "IBM Plex Sans Condensed", sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .leg .route .arrow { color: var(--ink-3); margin: 0 8px; font-weight: 400; }
+  .leg .times {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .leg .when { grid-column: 2; font-size: 12.5px; color: var(--ink-3); }
+
+  /* ---------- table ---------- */
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 460px; }
+  th {
+    text-align: left;
+    padding: 11px 26px;
+    border-bottom: 1px solid var(--line);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+  td { padding: 11px 26px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  td.note { color: var(--ink-3); font-size: 12.5px; }
+  .low-flag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: var(--good-dim);
+    color: var(--good);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+  a { color: var(--accent); }
+  a:focus-visible, .cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+  .cta:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="label">United · nonstop · 2 travelers</div>
+    <h1>Punta Cana fare watch</h1>
+    <p id="blurb">Standard Economy only — Basic Economy is shown for reference but never counted as the price. A cloud watcher checks this fare every 2 hours whether or not the laptop is open, and pushes to your phone when it drops to the buy line; the prices charted here are the confirmed Google Flights readings.</p>
+  </header>
+
+  <section class="panel">
+    <div class="price-panel">
+      <div class="price-row">
+        <div class="figure">
+          <div class="label">Standard Economy · 2 travelers</div>
+          <div class="amount" id="amount">—</div>
+          <div class="sub" id="perPerson"></div>
+        </div>
+        <div class="delta flat" id="delta"></div>
+        <div class="state" id="state"><span class="dot"></span><span id="stateText">tracking</span></div>
+      </div>
+      <a class="cta" id="bookLink" href="#" target="_blank" rel="noopener noreferrer">Open on Google Flights →</a>
+    </div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="panel chart-card">
+    <div class="chart-head">
+      <div class="label">Price history</div>
+      <div class="legend">
+        <span><i class="swatch"></i> Standard Economy</span>
+        <span><i class="swatch buy"></i> Buy alert &le;&nbsp;$1,600</span>
+      </div>
+    </div>
+    <div class="chart-scroll"><svg class="chart" id="chart" role="img" aria-labelledby="chartTitle"><title id="chartTitle">Standard Economy total price over time</title></svg></div>
+  </section>
+
+  <section class="panel itin" id="itin"></section>
+
+  <section class="panel">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Checked</th><th>Economy</th><th>Basic</th><th>Note</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span id="lastRun"></span>
+    <span>Alerting only — no booking is ever made automatically.</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("watch-data").textContent);
+  const log = [...D.log].sort((a, b) => new Date(a.ts) - new Date(b.ts));
+  const cfg = D.config;
+  const usd = n => "$" + Number(n).toLocaleString("en-US");
+
+  const dt = ts => new Date(ts).toLocaleString("en-US", {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+  });
+
+  const priced = log.filter(r => typeof r.economy === "number");
+  const cur = priced[priced.length - 1];
+  const prev = priced[priced.length - 2];
+  const low = priced.length ? Math.min(...priced.map(r => r.economy)) : null;
+
+  document.getElementById("bookLink").href = cfg.bookingUrl;
+
+  // --- headline figure ---
+  if (cur) {
+    document.getElementById("amount").textContent = usd(cur.economy);
+    document.getElementById("perPerson").textContent =
+      usd(Math.round(cur.economy / D.itinerary.pax)) + " per person · checked " + dt(cur.ts);
+  } else {
+    document.getElementById("amount").textContent = "no fare";
+  }
+
+  const dEl = document.getElementById("delta");
+  if (cur && prev) {
+    const diff = cur.economy - prev.economy;
+    dEl.className = "delta " + (diff > 0 ? "up" : diff < 0 ? "down" : "flat");
+    dEl.textContent = diff === 0 ? "no change" : (diff > 0 ? "▲ " : "▼ ") + usd(Math.abs(diff)) + " since last check";
+  } else {
+    dEl.className = "delta flat";
+    dEl.textContent = "first observation";
+  }
+
+  const sEl = document.getElementById("state");
+  const sTxt = document.getElementById("stateText");
+  if (cur && cur.economy <= cfg.tier1) {
+    sEl.classList.add("buy");
+    sTxt.textContent = "buy alert";
+  } else if (cur) {
+    const over = cur.economy - cfg.tier1;
+    sTxt.textContent = usd(over) + " above buy line";
+  }
+
+  // --- stats ---
+  const stats = [
+    ["All-time low", low != null ? usd(low) : "—", low != null && cur && cur.economy === low],
+    ["Baseline", usd(cfg.baseline), false],
+    ["Buy alert at", usd(cfg.tier1), false],
+    ["Checks logged", String(priced.length), false]
+  ];
+  document.getElementById("stats").innerHTML = stats.map(([k, v, good]) =>
+    `<div class="stat"><span class="label">${k}</span><span class="v${good ? " good" : ""}">${v}</span></div>`
+  ).join("");
+
+  // --- itinerary ---
+  const legDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric"
+  });
+  document.getElementById("itin").innerHTML = [D.itinerary.out, D.itinerary.back].map(l => `
+    <div class="leg">
+      <span class="code">${l.flight}</span>
+      <span class="route">${l.from}<span class="arrow">→</span>${l.to}</span>
+      <span class="times">${l.dep} – ${l.arr} · ${l.dur}</span>
+      <span class="when">${legDate(l.date)} · nonstop</span>
+    </div>`).join("");
+
+  // --- chart ---
+  const svg = document.getElementById("chart");
+  const W = 820, H = 170, padL = 52, padR = 14, padT = 14, padB = 24;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("preserveAspectRatio", "none");
+
+  if (priced.length) {
+    const vals = priced.map(r => r.economy).concat([cfg.tier1]);
+    let min = Math.min(...vals), max = Math.max(...vals);
+    const pad = Math.max(60, (max - min) * 0.18);
+    min -= pad; max += pad;
+
+    const n = priced.length;
+    const x = i => padL + (n === 1 ? (W - padL - padR) / 2 : i * (W - padL - padR) / (n - 1));
+    const y = v => padT + (max - v) * (H - padT - padB) / (max - min);
+
+    const ticks = [max, (max + min) / 2, min].map(v => Math.round(v / 50) * 50);
+    const parts = [];
+
+    ticks.forEach(t => {
+      parts.push(`<line x1="${padL}" y1="${y(t)}" x2="${W - padR}" y2="${y(t)}" stroke="var(--line-soft)" stroke-width="1"/>`);
+      parts.push(`<text x="${padL - 10}" y="${y(t) + 4}" text-anchor="end" fill="var(--ink-3)" font-family="IBM Plex Mono, monospace" font-size="10">${usd(t)}</text>`);
+    });
+
+    const pts = priced.map((r, i) => [x(i), y(r.economy)]);
+    const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    parts.push(`<path d="${line} L ${pts[pts.length - 1][0].toFixed(1)} ${H - padB} L ${pts[0][0].toFixed(1)} ${H - padB} Z" fill="var(--accent-dim)"/>`);
+    parts.push(`<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`);
+
+    parts.push(`<line x1="${padL}" y1="${y(cfg.tier1)}" x2="${W - padR}" y2="${y(cfg.tier1)}" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+
+    pts.forEach((p, i) => {
+      const last = i === pts.length - 1;
+      parts.push(`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${last ? 4.5 : 2.5}" fill="var(--accent)"${last ? ' stroke="var(--surface)" stroke-width="2"' : ""}/>`);
+    });
+
+    const firstLbl = new Date(priced[0].ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const lastLbl = new Date(priced[n - 1].ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    parts.push(`<text x="${padL}" y="${H - 6}" fill="var(--ink-3)" font-family="IBM Plex Mono, monospace" font-size="10">${firstLbl}</text>`);
+    if (n > 1) parts.push(`<text x="${W - padR}" y="${H - 6}" text-anchor="end" fill="var(--ink-3)" font-family="IBM Plex Mono, monospace" font-size="10">${lastLbl}</text>`);
+
+    svg.insertAdjacentHTML("beforeend", parts.join(""));
+  }
+
+  // --- table (newest first) ---
+  document.getElementById("rows").innerHTML = [...priced].reverse().map(r => `
+    <tr>
+      <td class="num">${dt(r.ts)}</td>
+      <td class="num">${usd(r.economy)}${r.economy === low ? '<span class="low-flag">low</span>' : ""}</td>
+      <td class="num">${r.basic != null ? usd(r.basic) : "—"}</td>
+      <td class="note">${r.note || (r.insight ? usd(r.economy) + " is " + r.insight + " for Economy" : "")}</td>
+    </tr>`).join("");
+
+  const lr = D.lastRun || {};
+  document.getElementById("lastRun").textContent =
+    "Last confirmed reading " + (lr.ts ? dt(lr.ts) : "—") + (lr.status && lr.status !== "ok" ? " · " + lr.status : "") + " · cloud watcher checks every 2 hours";
+})();
+</script>

@@ -1,0 +1,352 @@
+/* Shared component kit. Use these classes — don't restyle per page. */
+
+/* Cards */
+.card {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
+}
+
+.card-title {
+  font-size: var(--fs-md);
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+
+/* Stat tiles */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.stat-value {
+  font-size: var(--fs-hero);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.stat-value.sm {
+  font-size: var(--fs-xl);
+}
+
+.stat-delta {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.stat-delta .up-good {
+  color: var(--good-text);
+  font-weight: 600;
+}
+
+.stat-delta .up-bad {
+  color: var(--critical);
+  font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn:hover {
+  background: var(--surface-2);
+}
+
+.btn-primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
+}
+
+.btn-primary:hover {
+  background: #262624;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--surface-2);
+}
+
+.btn-danger {
+  color: var(--critical);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Inputs */
+.input,
+.select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: var(--fs-sm);
+  outline: none;
+  min-width: 0;
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+/* Segmented control */
+.segmented {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.segmented button.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Chips & badges */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.chip-wrap {
+  white-space: normal;
+  text-align: left;
+}
+
+.chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.badge-good {
+  background: rgba(12, 163, 12, 0.12);
+  color: var(--good-text);
+}
+
+.badge-warn {
+  background: rgba(250, 178, 25, 0.18);
+  color: #7a5200;
+}
+
+.badge-bad {
+  background: rgba(208, 59, 59, 0.12);
+  color: var(--critical);
+}
+
+.badge-neutral {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+/* Progress bars */
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Tables. Wide tables scroll inside their own container so the page body
+   never scrolls horizontally. */
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  text-align: left;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--grid);
+}
+
+.table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--grid);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ink-2);
+}
+
+.empty-state .big {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 11, 11, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 620px;
+  max-height: 85vh;
+  overflow: auto;
+  padding: 22px 24px;
+}
+
+/* Banner */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent-wash);
+  border: 1px solid rgba(42, 120, 214, 0.25);
+  color: var(--accent-strong);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 550;
+}
+
+/* Card art beside a block of detail; stacks on narrow screens. */
+.split-media {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .split-media {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Credit card art */
+.card-art {
+  border-radius: 14px;
+  color: #fff;
+  padding: 16px 18px;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-art .card-name {
+  font-weight: 700;
+  font-size: var(--fs-md);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.card-art .card-mask {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  opacity: 0.9;
+  font-size: var(--fs-sm);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}

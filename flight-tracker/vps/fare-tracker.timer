@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the IAD-PUJ fare tracker every 2 hours
+
+[Timer]
+OnCalendar=*-*-* 00/2:07:00
+# Fire on boot too, and catch up if the VPS was down when a run was due.
+Persistent=true
+RandomizedDelaySec=180
+
+[Install]
+WantedBy=timers.target

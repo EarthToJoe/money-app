@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__22ea5961-a3ef-4c2f-b3a2-01c2f646845e__search_flights",
+      "Read(//Users/irishpicasso/.claude/scheduled-tasks/iad-puj-flight-price-watch/**)",
+      "Bash(pmset -g sched)",
+      "Bash(pmset -g custom)",
+      "mcp__scheduled-tasks__list_scheduled_tasks"
+    ]
+  }
+}

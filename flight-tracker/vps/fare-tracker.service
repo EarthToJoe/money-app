@@ -1,0 +1,21 @@
+[Unit]
+Description=IAD-PUJ fare tracker (UA 1661/1614, standard Economy, 2 pax)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=fare
+WorkingDirectory=/opt/fare-tracker
+EnvironmentFile=/opt/fare-tracker/.env
+ExecStart=/opt/fare-tracker/.venv/bin/python /opt/fare-tracker/vps/tracker.py
+
+# The script only reads a public page and writes one CSV. Keep it boxed in.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/fare-tracker
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true

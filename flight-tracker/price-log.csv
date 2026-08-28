@@ -1,0 +1,8 @@
+timestamp,standard_econ_2pax_total_usd,standard_econ_per_person_usd,basic_econ_per_person_usd,fare_tracked,notes
+2026-08-21T10:55:00-04:00,,,885.97,BASIC_ECONOMY_1PAX,baseline observation (legacy schema: basic economy 1 traveler)
+2026-08-22T13:53:13-04:00,,,884.97,BASIC_ECONOMY_1PAX,legacy schema
+2026-08-22T13:54:27-04:00,,,884.97,BASIC_ECONOMY_1PAX,legacy schema
+2026-08-24T09:01:51-04:00,,,759.97,BASIC_ECONOMY_1PAX,legacy schema; basic economy all-time low
+2026-08-24T09:40:00-04:00,1770.00,885.00,760.00,STANDARD_ECONOMY_2PAX,switched tracking to standard Economy for 2 travelers; Google Flights fare ladder; baseline for new schema
+2026-08-25T20:22:54-04:00,2042.00,1021.00,896.00,STANDARD_ECONOMY_2PAX,no tier fired; +$272 vs prior; Google: "$2042 is typical for Economy" (range $1050-2550)
+2026-08-28T08:59:43-04:00,2044.00,1022.00,897.00,STANDARD_ECONOMY_2PAX,"no tier fired; +$2 vs prior; Google: \$2044 is typical for Economy (range \$1050-2550); offset=$250"
