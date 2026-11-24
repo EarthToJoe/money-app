@@ -85,6 +85,111 @@
   min-width: 0;
 }
 
+/* Sync status: sits above the footer, so it takes the push to the bottom. */
+.sync-status {
+  margin-top: auto;
+  padding: 10px 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+
+.sync-status + .sidebar-footer {
+  margin-top: 0;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  flex: none;
+}
+
+.sync-status[data-phase='synced'] .sync-dot {
+  background: var(--good);
+}
+
+.sync-status[data-phase='offline'] .sync-dot {
+  background: var(--warning);
+}
+
+.sync-signout {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.sync-notice {
+  flex-basis: 100%;
+  color: var(--ink);
+  background: var(--accent-wash);
+  border-radius: 8px;
+  padding: 8px;
+  line-height: 1.45;
+}
+
+/* Sign-in screen */
+.signin {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--page);
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signin-brand {
+  padding: 0 0 8px;
+}
+
+.signin-label {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.signin-input {
+  font: inherit;
+  /* 16px stops iPhone Safari from zooming in on focus. */
+  font-size: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.signin-error {
+  font-size: var(--fs-sm);
+  color: var(--critical);
+}
+
+.signin-submit {
+  justify-content: center;
+  padding: 10px;
+}
+
+.signin-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
 @media (max-width: 760px) {
   .shell {
     flex-direction: column;
@@ -111,5 +216,28 @@
 
   .sidebar-footer {
     display: none;
+  }
+
+  .sync-status {
+    margin-top: 0;
+    padding: 0 0 0 8px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .sync-status .sync-label,
+  .sync-status .sync-signout {
+    display: none;
+  }
+
+  .sync-notice {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 50;
+    white-space: normal;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    background: var(--surface);
   }
 }
