@@ -40,6 +40,14 @@ Other scripts: `npm run dev:web` (frontend only), `npm run dev:server` (API only
 `npm run tunnel` (public HTTPS tunnel for Plaid OAuth), `npm run build`,
 `npm run typecheck`, `node scripts/smoke.mjs` (typecheck + build gate).
 
+## On your phone, and where it runs
+
+Finch runs at **finch.hughesnode.com** on the VPS, as one `npm start` process
+behind the web server. Every merge to `main` deploys there automatically.
+Sign in with `FINCH_PASSWORD`, then use Safari's **Add to Home Screen**, and
+your data stays in sync between the phone and the Mac. Setup and the manual
+fallback are in **[docs/deploy.md](docs/deploy.md)**.
+
 ## The pages
 
 | Page | What you get |
