@@ -1,0 +1,21 @@
+# systemd unit for Finch. Copy to /etc/systemd/system/finch.service, change
+# User and WorkingDirectory to match your VPS, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now finch
+# See docs/deploy.md.
+
+[Unit]
+Description=Finch money app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=finch
+WorkingDirectory=/home/finch/money-app
+ExecStart=/usr/bin/env npm start
+Environment=NODE_ENV=production
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
