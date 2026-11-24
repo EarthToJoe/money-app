@@ -90,14 +90,31 @@
     flex-direction: column;
   }
 
+  /* Phone: the nav becomes a bar that stays at the top while you scroll, and
+     clears the notch / Dynamic Island when opened from the home screen. */
   .sidebar {
     width: 100%;
     height: auto;
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 20;
     flex-direction: row;
     align-items: center;
     overflow-x: auto;
-    padding: 10px 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px
+      calc(12px + env(safe-area-inset-left));
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .content {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .brand {
