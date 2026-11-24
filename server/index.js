@@ -10,7 +10,16 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { readState, writeState } from './data-store.js';
+import {
+  identify,
+  makeSessionToken,
+  passwordMatches,
+  readAppPassword,
+  sessionCookie,
+} from './session-auth.js';
 import { ENV_PATH, readEnvFile, restoreEnvFile, upsertEnvValues } from './env-file.js';
 import {
   ApiError,
@@ -32,7 +41,7 @@ import {
   validateRedirectUri,
 } from './plaid.js';
 import { clearCursors, deleteItem, getClientUserId, getItem, listItems, saveItem } from './store.js';
-import { isLocalRequest, isLoopbackAddress, makeGate, readTunnelPassword } from './tunnel-auth.js';
+import { isLocalRequest, isLoopbackAddress, readTunnelPassword, unauthorized } from './tunnel-auth.js';
 
 // ESM evaluates every static import above before this line, so .env can't be
 // loaded ahead of them. That's why plaid.js reads process.env lazily, inside
@@ -60,28 +69,142 @@ const ALLOWED_ORIGINS = [
  */
 const TUNNEL_PASSWORD = readTunnelPassword();
 
+/**
+ * The sign-in password for a deployed Finch (see server/session-auth.js), or
+ * '' when none is set. Read once at boot.
+ */
+const APP_PASSWORD = readAppPassword();
+
 const app = express();
 app.disable('x-powered-by');
 app.use(cors({ origin: ALLOWED_ORIGINS }));
 
-// Defence in depth. Vite's proxy already sits behind the same gate, but this
-// port is listening on every interface, so somebody could point a tunnel
-// straight at :8787 and skip the dev server entirely. Requests that really are
-// local — which is what the proxy's own hop looks like, since it connects from
-// 127.0.0.1 with no forwarding headers — pass through untouched, so the normal
-// path never sees a second prompt. See server/tunnel-auth.js for what "local"
-// means and why a loopback check alone is not it.
+// Who may use the API.
+//
+// Requests from this machine always pass, which is what the Vite proxy's own
+// hop looks like, so `npm run dev` never prompts. Anyone else needs one of:
+//
+//   * a sign-in cookie, when FINCH_PASSWORD is set (the deployed app), or
+//   * the tunnel password over Basic auth, when `npm run tunnel` set one.
+//
+// With FINCH_PASSWORD set, nobody else gets in. Without it, the Plaid routes
+// keep their old behaviour (open unless a tunnel password is set), but the
+// synced-data routes below refuse remote callers outright, so your data is
+// never served to the internet just because a password was forgotten.
 //
 // Mounted before express.json so an unauthenticated stranger can't make us
 // parse a megabyte of their JSON, and before every route below.
-app.use('/api', makeGate({ password: TUNNEL_PASSWORD, realm: 'Finch API' }));
+const PUBLIC_API = new Set(['/api/health', '/api/session', '/api/login', '/api/logout']);
 
-app.use(express.json({ limit: '1mb' }));
+app.use('/api', (req, res, next) => {
+  if (PUBLIC_API.has(req.originalUrl.split('?')[0])) return next();
+  const who = identify(req, { appPassword: APP_PASSWORD, tunnelPassword: TUNNEL_PASSWORD });
+  if (who) {
+    req.finchCaller = who;
+    return next();
+  }
+  if (!APP_PASSWORD) {
+    // Tunnel mode: the browser prompt is how the tunnel password gets asked for.
+    if (TUNNEL_PASSWORD) return unauthorized(res, 'Finch API');
+    return next();
+  }
+  res.status(401).json({ error: { code: 'SIGN_IN_REQUIRED', message: 'Sign in to Finch first.' } });
+});
 
 /** Express 5 forwards rejected promises, but being explicit costs nothing. */
 const route = (handler) => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+// --- Sign-in ---------------------------------------------------------------
+
+/**
+ * Tells the app whether it needs to show the sign-in screen and whether synced
+ * data is available to this caller.
+ */
+app.get('/api/session', (req, res) => {
+  const who = identify(req, { appPassword: APP_PASSWORD, tunnelPassword: TUNNEL_PASSWORD });
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ signedIn: who !== null, passwordSet: APP_PASSWORD !== '', sync: who !== null });
+});
+
+/** Failed sign-ins per client address, so the password can't be guessed at speed. */
+const failedSignIns = new Map();
+const SIGN_IN_WINDOW_MS = 15 * 60 * 1000;
+const SIGN_IN_MAX_FAILURES = 10;
+
+function clientAddress(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) return forwarded.split(',')[0].trim();
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
+app.post('/api/login', express.json({ limit: '4kb' }), (req, res) => {
+  if (!APP_PASSWORD) {
+    return res.status(400).json({
+      error: { code: 'NO_PASSWORD_SET', message: 'Set FINCH_PASSWORD in .env on the server, then restart Finch.' },
+    });
+  }
+
+  const address = clientAddress(req);
+  const now = Date.now();
+  const record = failedSignIns.get(address);
+  if (record && now - record.first < SIGN_IN_WINDOW_MS && record.count >= SIGN_IN_MAX_FAILURES) {
+    return res.status(429).json({
+      error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many wrong passwords. Try again in 15 minutes.' },
+    });
+  }
+
+  if (!passwordMatches(req.body?.password, APP_PASSWORD)) {
+    const fresh = !record || now - record.first >= SIGN_IN_WINDOW_MS;
+    failedSignIns.set(address, fresh ? { first: now, count: 1 } : { ...record, count: record.count + 1 });
+    return res.status(401).json({ error: { code: 'WRONG_PASSWORD', message: "That password isn't right." } });
+  }
+
+  failedSignIns.delete(address);
+  res.setHeader('Set-Cookie', sessionCookie(req, makeSessionToken(APP_PASSWORD)));
+  res.json({ signedIn: true });
+});
+
+app.post('/api/logout', (req, res) => {
+  res.setHeader('Set-Cookie', sessionCookie(req, ''));
+  res.json({ signedIn: false });
+});
+
+// --- Synced data -----------------------------------------------------------
+
+/**
+ * Your data is only for you: a signed-in device or this machine. The tunnel
+ * password is deliberately not enough when FINCH_PASSWORD exists, and without
+ * FINCH_PASSWORD remote callers are refused even if the gate above let them by.
+ */
+function requireDataAccess(req, res, next) {
+  if (req.finchCaller === 'local' || req.finchCaller === 'session') return next();
+  if (req.finchCaller === 'tunnel' && !APP_PASSWORD) return next();
+  res.status(403).json({
+    error: {
+      code: 'SYNC_NOT_ALLOWED',
+      message: 'Synced data is only available after signing in. Set FINCH_PASSWORD on the server.',
+    },
+  });
+}
+
+app.get('/api/state', requireDataAccess, route(async (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(await readState());
+}));
+
+app.put('/api/state', requireDataAccess, express.json({ limit: '25mb' }), route(async (req, res) => {
+  const { baseRev, state } = req.body ?? {};
+  if (!Number.isInteger(baseRev) || baseRev < 0 || !state || typeof state !== 'object' || Array.isArray(state)) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Send { baseRev, state }.' } });
+  }
+  const result = await writeState(baseRev, state);
+  if (!result.ok) return res.status(409).json({ error: { code: 'CONFLICT' }, current: result.current });
+  res.json({ rev: result.rev, updatedAt: result.updatedAt });
+}));
+
+app.use(express.json({ limit: '1mb' }));
 
 const plaidRoutes = express.Router();
 app.use('/api/plaid', plaidRoutes);
@@ -705,6 +828,36 @@ app.use('/api', (req, res) => {
   });
 });
 
+// --- The app itself (production) ---------------------------------------------
+
+// After `npm run build`, this one process serves the built app as well as the
+// API, so a deployed Finch is a single `npm start` behind nginx or Caddy. In
+// development dist/ usually doesn't exist and Vite serves the app instead.
+const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
+const SERVE_APP = existsSync(`${DIST}index.html`);
+
+if (SERVE_APP) {
+  app.use(
+    express.static(DIST, {
+      index: false,
+      setHeaders(res, path) {
+        // Hashed bundles never change; everything else must be re-checked so a
+        // deploy shows up on the next launch.
+        res.setHeader(
+          'Cache-Control',
+          path.includes('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
+        );
+      },
+    }),
+  );
+  // Every other page (/, /oauth) is the single-page app.
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(`${DIST}index.html`);
+  });
+}
+
 app.use((err, req, res, _next) => {
   const info = describeError(err);
   if (info.status >= 500) {
@@ -722,7 +875,11 @@ process.on('unhandledRejection', (reason) => {
   console.error(`[plaid] unhandled rejection: ${describeError(reason).message}`);
 });
 
-const server = app.listen(PORT, () => {
+// FINCH_HOST=127.0.0.1 keeps a deployed Finch reachable only through the web
+// server in front of it. Unset, it listens on every interface as before.
+const HOST = process.env.FINCH_HOST?.trim() || undefined;
+
+const server = app.listen(PORT, HOST, () => {
   const { configured, env, redirectUri } = plaidSettings();
 
   const line = configured
@@ -731,9 +888,18 @@ const server = app.listen(PORT, () => {
 
   // The password itself is never printed — `npm run tunnel` is what shows it,
   // once, to the person who asked for a tunnel.
-  const gated = TUNNEL_PASSWORD ? ' · tunnel password set' : '';
+  const gated =
+    (TUNNEL_PASSWORD ? ' · tunnel password set' : '') +
+    (APP_PASSWORD ? ' · sign-in on' : '') +
+    (SERVE_APP ? ' · serving dist/' : '');
 
   console.log((redirectUri ? `${line}, OAuth redirect ${redirectUri}` : line) + gated);
+
+  if (SERVE_APP && !APP_PASSWORD) {
+    console.warn(
+      '[finch] Serving the app with no FINCH_PASSWORD: synced data is off for every device except this machine. Set FINCH_PASSWORD in .env to sign in from your phone.',
+    );
+  }
 
   // A tunnel URL saved under sandbox and still sitting there after a switch to
   // production would fail every link with INVALID_FIELD. Say so at boot rather

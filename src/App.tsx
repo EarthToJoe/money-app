@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { DEMO_VERSION, useApp } from './store';
 import { isOAuthReturn } from './lib/oauthResume';
+import { startCloudSync, useSyncStatus } from './lib/cloudSync';
+import SyncStatus from './components/SyncStatus';
+import SignIn from './pages/SignIn';
 import OAuthReturn from './pages/OAuthReturn';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -124,6 +127,19 @@ function useHashRoute(): [PageId, (p: PageId) => void] {
  */
 export default function App() {
   if (isOAuthReturn()) return <OAuthReturn />;
+  return <SyncedApp />;
+}
+
+/**
+ * Starts syncing with the server, and swaps in the sign-in screen when the
+ * server needs a password this device hasn't given yet.
+ */
+function SyncedApp() {
+  const phase = useSyncStatus((s) => s.phase);
+  useEffect(() => {
+    void startCloudSync();
+  }, []);
+  if (phase === 'signed-out') return <SignIn />;
   return <AppShell />;
 }
 
@@ -167,6 +183,7 @@ function AppShell() {
             {n.label}
           </button>
         ))}
+        <SyncStatus />
         <div className="sidebar-footer">
           Finch shows math on reward rates, not financial advice. Verify card terms with the
           issuer before applying.

@@ -10,7 +10,8 @@
     "tunnel": "node scripts/tunnel.mjs",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

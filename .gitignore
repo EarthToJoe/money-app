@@ -3,3 +3,5 @@ dist
 .DS_Store
 .env
 server/.plaid-store.json
+server/.finch-data.json
+server/.finch-data.json.*.tmp
